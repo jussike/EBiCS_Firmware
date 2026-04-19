@@ -1,18 +1,9 @@
-/*
- * FOC.c
- *
- *  Created on: 25.01.2019
- *      Author: Stancecoke
- */
 #include "main.h"
 #include "config.h"
 #include "FOC.h"
 #include "stm32f1xx_hal.h"
 #include <arm_math.h>
 
-//q31_t	T_halfsample = 0.00003125;
-//q31_t	counterfrequency = 64000000;
-//q31_t	U_max = (1/_SQRT3)*_U_DC;
 long long	temp1;
 long long	temp2;
 q31_t	temp3;
@@ -20,7 +11,6 @@ q31_t	temp4;
 q31_t	temp5;
 q31_t	temp6;
 q31_t z;
-//q31_t startup_counter=0;	//counter for start up routine
 
 q31_t q31_i_q_fil = 0;
 q31_t q31_i_d_fil = 0;
@@ -146,11 +136,7 @@ uint16_t LUT_atan[101]={0,
 		16383
 } ;
 
-
-//const q31_t _T = 2048;
-
 TIM_HandleTypeDef htim1;
-
 
 void FOC_calculation(int16_t int16_i_as, int16_t int16_i_bs, q31_t q31_teta, int16_t int16_i_q_target, MotorState_t* MS_FOC);
 void svpwm(q31_t q31_u_alpha, q31_t q31_u_beta);
@@ -159,11 +145,6 @@ q31_t PI_control_i_d (q31_t ist, q31_t soll);
 q31_t atan2_LUT(q31_t e_alpha, q31_t e_beta);
 void observer_update(long long v_alpha, long long v_beta, long long i_alpha, long long i_beta,  q31_t *e_alpha,q31_t *e_beta);
 int utils_truncate_number_abs(long long *number, q31_t max);
-
-
-
-
-
 
 void FOC_calculation(int16_t int16_i_as, int16_t int16_i_bs, q31_t q31_teta, int16_t int16_i_q_target, MotorState_t* MS_FOC)
 {
@@ -182,10 +163,6 @@ void FOC_calculation(int16_t int16_i_as, int16_t int16_i_bs, q31_t q31_teta, int
 
 
 	 q31_t sinevalue=0, cosinevalue = 0;
-
-
-	// temp5=(q31_t)int16_i_as;
-	// temp6=(q31_t)int16_i_bs;
 
 	// Clark transformation
 	arm_clarke_q31((q31_t)int16_i_as, (q31_t)int16_i_bs, &q31_i_alpha, &q31_i_beta);
@@ -215,32 +192,8 @@ void FOC_calculation(int16_t int16_i_as, int16_t int16_i_bs, q31_t q31_teta, int
 
 	PI_flag=1;
 
-
-//if(!MS_FOC->Motor_state&&int16_i_q_target>20){
-//
-////	MS_FOC->u_d=1;
-////	MS_FOC->u_q=1;//startup_counter>>4;
-////	q31_teta_obs+=(2684354);
-//	startup_counter++;
-//	if (startup_counter>1){
-//		MS_FOC->Motor_state=1;
-//		startup_counter=0;
-//	}
-//	temp5=startup_counter;
-//}
-
-
-
 	//inverse Park transformation
 	arm_inv_park_q31(MS_FOC->u_d, MS_FOC->u_q, &q31_u_alpha, &q31_u_beta, -sinevalue, cosinevalue);
-
-	//temp1= q31_i_q;
-	//temp2= q31_i_alpha_corr;
-	//temp3= q31_u_alpha;
-    //temp4= q31_u_beta;
-
-
-
 	observer_update(((long long)q31_u_alpha*(long long)adcData[0]*CAL_V)>>11, ((long long)(-q31_u_beta*(long long)adcData[0]*CAL_V))>>11, (long long)((-q31_i_alpha_corr)*CAL_I), (long long)((-q31_i_beta_corr)*CAL_I), &fl_e_alpha_obs, &fl_e_beta_obs);
 
 if(MS_FOC->Motor_state){
@@ -262,17 +215,6 @@ if(MS_FOC->Motor_state){
 	}
 	q31_angle_old=q31_teta_obs;
 
-
-
-	//temp5=fl_e_alpha_obs;
-	//temp6=fl_e_beta_obs;
-	//temp3=q31_teta_obs>>24;
-	//temp5=q31_teta>>24;
-	//temp6=q31_teta_obs>>24;
-
-
-	//temp1=int16_i_as;
-	//temp2=int16_i_bs;
 	if(!HAL_GPIO_ReadPin(PAS_GPIO_Port, PAS_Pin)&&ui8_debug_state==0)
 			{
 		e_log[z][0]=temp1;//fl_e_alpha_obs;
@@ -291,10 +233,7 @@ if(MS_FOC->Motor_state){
 	else {if(ui8_debug_state==2)ui8_debug_state=3;;}
 	//call SVPWM calculation
 
-	//q31_u_alpha=250;
-	//q31_u_beta=0;
 	svpwm(q31_u_alpha, q31_u_beta);
-	//temp6=__HAL_TIM_GET_COUNTER(&htim1);
 
 }
 //PI Control for quadrature current iq (torque) float operation without division
@@ -324,8 +263,6 @@ q31_t PI_control_i_q (q31_t ist, q31_t soll)
   return (q31_q_dc);
 }
 
-
-
 //PI Control for direct current id (loss)
 q31_t PI_control_i_d (q31_t ist, q31_t soll)
   {
@@ -353,8 +290,6 @@ q31_t PI_control_i_d (q31_t ist, q31_t soll)
 void svpwm(q31_t q31_u_alpha, q31_t q31_u_beta)	{
 
 //SVPWM according to chapter 4.9 of UM1052
-
-
 	q31_t q31_U_alpha = (q31_t)((float)_SQRT3 *(float)_T * (float) q31_u_alpha); //float operation to avoid q31 overflow
 	q31_t q31_U_beta = -_T * q31_u_beta;
 	q31_t X = q31_U_beta;
@@ -398,121 +333,30 @@ void observer_update(long long v_alpha, long long v_beta, long long i_alpha, lon
 	static long long x1=0;
 	static long long x2=0;
 
-
-
-/*
-	// Saturation compensation
-	const float sign = (m_motor_state.iq * m_motor_state.vq) >= 0.0 ? 1.0 : -1.0;
-	R -= R * sign * m_conf->foc_sat_comp * (m_motor_state.i_abs_filter / m_conf->l_current_max);
-
-	// Temperature compensation
-	const float t = mc_interface_temp_motor_filtered();
-	if (m_conf->foc_temp_comp && t > -5.0) {
-		R += R * 0.00386 * (t - m_conf->foc_temp_comp_base_temp);
-	}*/
-
-
-
-
 	const long long L_ia = (L * i_alpha)>>16;//(iaf>>fact))>>5; // see comment in config.h for right shift
 	const long long L_ib = (L * i_beta)>>16;//(ibf>>fact))>>5;
 	const long long R_ia = (R * i_alpha)>>9;//(iaf>>fact))>>3;
 	const long long R_ib = (R * i_beta)>>9;//(ibf>>fact))>>3;
 	const long long lambda_2 = lambda*lambda;
 	const long long gamma_half = GAMMA;
-	//temp2=v_alpha;
-	//temp1=R_ia;
-	//temp2=L_ia;
-
-	//temp1=i_alpha;
-	//temp4=i_beta;
-	//temp2=v_alpha;
-	//temp4=v_beta;
-
-
-
-
-	//temp1=v_alpha;
-	//temp2=v_beta;
-
-	// Original
-//	float err = lambda_2 - (SQ(*x1 - L_ia) + SQ(*x2 - L_ib));
-//	float x1_dot = -R_ia + v_alpha + gamma_half * (*x1 - L_ia) * err;
-//	float x2_dot = -R_ib + v_beta + gamma_half * (*x2 - L_ib) * err;
-//	*x1 += x1_dot * dt;
-//	*x2 += x2_dot * dt;
-/*
-	// Iterative with some trial and error
-	const int iterations = 6;
-	const float dt_iteration = dt / (float)iterations;
-	for (int i = 0;i < iterations;i++) {
-		float err = lambda_2 - (SQ(*x1 - L_ia) + SQ(*x2 - L_ib));
-		float gamma_tmp = gamma_half;
-		if (utils_truncate_number_abs(&err, lambda_2 * 0.2)) {
-			gamma_tmp *= 10.0;
-		}
-		float x1_dot = -R_ia + v_alpha + gamma_tmp * (*x1 - L_ia) * err;
-		float x2_dot = -R_ib + v_beta + gamma_tmp * (*x2 - L_ib) * err;
-
-		*x1 += x1_dot * dt_iteration;
-		*x2 += x2_dot * dt_iteration;
-	}
-	*/
 	*e_alpha= (x1 - L_ia);
 	*e_beta=  (x2 - L_ib);
-	//for (int i = 0;i <3;i++){
 	// Same as above, but without iterations.
 	long long err = lambda_2 - (((*e_alpha * *e_alpha)) + ((*e_beta * *e_beta)));
 
 	long long gamma_tmp = gamma_half;
-	if (utils_truncate_number_abs(&err, lambda_2>>0)) {
-		//if(gamma_tmp>0) gamma_tmp--;
-	}
-
-
 	long long x1_dot = -R_ia + (v_alpha) + ((*e_alpha * err)>>gamma_tmp) ;
 	long long x2_dot = -R_ib + (v_beta) + ((*e_beta * err)>>gamma_tmp) ;
-	//temp1 = err;
-	//temp2 = -R_ia + (v_alpha);
 	x1 += x1_dot >>dT;
 	x2 += x2_dot >>dT;
-
-	//temp1 =-R_ia;
-	//temp2 =v_alpha;
-	//temp3 =((*e_alpha * err)>>gamma_tmp);
 	temp4 =err;
 
 
 	*e_alpha= x1 - L_ia;// + (eaf>>24);
 	*e_beta= x2 - L_ib;
-
-	//temp3=*e_alpha;
-	//temp4=err;
-
-
-
-	//z++;
-	//if (z>9)z=0;
-	//UTILS_NAN_ZERO(*x1);
-	//UTILS_NAN_ZERO(*x2);
-
-	//*phase = utils_fast_atan2(*x2 - L_ib, *x1 - L_ia);
 }
-/*
-static void pll_run(float phase, float dt, volatile float *phase_var,volatile float *speed_var) {
-	//UTILS_NAN_ZERO(*phase_var);
-	float delta_theta = phase - *phase_var;
-	//utils_norm_angle_rad(&delta_theta);
-	//UTILS_NAN_ZERO(*speed_var);
-	*phase_var += (*speed_var + SPEED_KP * delta_theta) * dt;
-	//utils_norm_angle_rad((float*)phase_var);
-	*speed_var += SPEED_KI * delta_theta * dt;
-}*/
 
 q31_t atan2_LUT(q31_t e_alpha, q31_t e_beta){
-
-
-
 
 uint8_t index =0;
 uint8_t frac =0;

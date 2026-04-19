@@ -1,49 +1,6 @@
-
-/**
-  ******************************************************************************
-  * @file           : main.c
-  * @brief          : Main program body
-  ******************************************************************************
-  ** This notice applies to any and all portions of this file
-  * that are not between comment pairs USER CODE BEGIN and
-  * USER CODE END. Other portions of this file, whether 
-  * inserted by the user or by software development tools
-  * are owned by their respective copyright owners.
-  *
-  * COPYRIGHT(c) 2019 STMicroelectronics
-  *
-  * Redistribution and use in source and binary forms, with or without modification,
-  * are permitted provided that the following conditions are met:
-  *   1. Redistributions of source code must retain the above copyright notice,
-  *      this list of conditions and the following disclaimer.
-  *   2. Redistributions in binary form must reproduce the above copyright notice,
-  *      this list of conditions and the following disclaimer in the documentation
-  *      and/or other materials provided with the distribution.
-  *   3. Neither the name of STMicroelectronics nor the names of its contributors
-  *      may be used to endorse or promote products derived from this software
-  *      without specific prior written permission.
-  *
-  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-  * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-  * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-  * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-  *
-  ******************************************************************************
-  */
-/* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "stm32f1xx_hal.h"
 #include "math.h"
-
-
-
-/* USER CODE BEGIN Includes */
 
 // Lishui BLCD FOC Open Source Firmware
 // Board uses IRS2003 half bridge drivers, this need inverted pulses for low-side Mosfets, deadtime is generated in driver
@@ -60,9 +17,7 @@
 
 #include "config.h"
 #include <arm_math.h>
-/* USER CODE END Includes */
 
-/* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc1;
 ADC_HandleTypeDef hadc2;
 DMA_HandleTypeDef hdma_adc1;
@@ -74,10 +29,6 @@ TIM_HandleTypeDef htim3;
 UART_HandleTypeDef huart1;
 DMA_HandleTypeDef hdma_usart1_tx;
 DMA_HandleTypeDef hdma_usart1_rx;
-
-/* USER CODE BEGIN PV */
-/* Private variables ---------------------------------------------------------*/
-
 
 uint32_t ui32_tim1_counter=0;
 uint8_t ui8_hall_state=0;
@@ -125,8 +76,6 @@ q31_t q31_rotorposition_hall;
 
 char buffer[100];
 char TxBuff[14];
-//uint8_t  first_run_flag=1;
-//char char_dyn_adc_state=1;
 uint8_t char_dyn_adc_state_old=1;
 q31_t	q31_u_abs=0;
 q31_t q31_teta_obs;
@@ -135,10 +84,6 @@ q31_t q31_delta_teta_obs;
 
 q31_t switchtime[3];
 uint16_t adcData[5];
-//static int8_t angle[256][4];
-//static int8_t angle_old;
-
-//q31_t q31_startpoint_conversion = 2048;
 
 //Rotor angle scaled from degree to q31 for arm_math. -180°-->-2^31, 0°-->0, +180°-->+2^31
 const q31_t DEG_0 = 0;
@@ -164,10 +109,6 @@ MotorState_t MS;
 KINGMETER_t KM;
 #endif
 
-
-/* USER CODE END PV */
-
-/* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
@@ -181,9 +122,6 @@ static void MX_TIM3_Init(void);
 
 void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
                                 
-
-/* USER CODE BEGIN PFP */
-/* Private function prototypes -----------------------------------------------*/
 #if (DISPLAY_TYPE & DISPLAY_TYPE_KINGMETER)
 void kingmeter_update(void);
 #endif
@@ -193,41 +131,18 @@ void UART_IdleItCallback(void);
 
 int32_t map (int32_t x, int32_t in_min, int32_t in_max, int32_t out_min, int32_t out_max);
 
-
-
-/* USER CODE END PFP */
-
-/* USER CODE BEGIN 0 */
-
-/* USER CODE END 0 */
-
 /**
   * @brief  The application entry point.
   *
   * @retval None
   */
 int main(void) {
-  /* USER CODE BEGIN 1 */
-
-
-
-  /* USER CODE END 1 */
-
-  /* MCU Configuration----------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
 
-  /* USER CODE BEGIN Init */
-
-  /* USER CODE END Init */
-
   /* Configure the system clock */
   SystemClock_Config();
-
-  /* USER CODE BEGIN SysInit */
-
-  /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
@@ -256,17 +171,14 @@ int main(void) {
  __HAL_ADC_ENABLE_IT(&hadc2,ADC_IT_JEOC);
 
 
-  //HAL_ADC_Start_IT(&hadc1);
   HAL_ADCEx_MultiModeStart_DMA(&hadc1, (uint32_t*)adcData, 5);
   HAL_ADC_Start_IT(&hadc2);
   MX_TIM1_Init(); //Hier die Reihenfolge getauscht!
   MX_TIM2_Init();
   MX_TIM3_Init();
 
- // Start Timer 1
     if(HAL_TIM_Base_Start_IT(&htim1) != HAL_OK)
       {
-        /* Counter Enable Error */
         Error_Handler();
       }
 
@@ -286,16 +198,11 @@ int main(void) {
 
     TIM1->CCR4 = TRIGGER_DEFAULT; //ADC sampling just before timer overflow (just before middle of PWM-Cycle)
 
-    //TIM1->BDTR |= 1L<<15;
-
-    // Start Timer 2
        if(HAL_TIM_Base_Start_IT(&htim2) != HAL_OK)
          {
-           /* Counter Enable Error */
            Error_Handler();
          }
 
-       // Start Timer 3
 
        if(HAL_TIM_Base_Start_IT(&htim3) != HAL_OK)
             {
@@ -360,17 +267,10 @@ int main(void) {
 
     MS.Speed=5000;
     MS.Motor_state=0;
-  //  printf_("Lishui FOC Sensorless v0.1 \r\n");
-
-    //TIM1->BDTR &= ~(1L<<15); //reset MOE (Main Output Enable) bit to disable PWM output
 
     CLEAR_BIT(TIM1->BDTR, TIM_BDTR_MOE);
 
 
-  /* USER CODE END 2 */
-
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
   while (1)
   {
 
@@ -404,7 +304,6 @@ int main(void) {
 			  q31_u_d_temp = -PI_control_i_d(MS.i_d, 0); //control direct current to zero
 
 			  	//limit voltage in rotating frame, refer chapter 4.10.1 of UM1052
-			 // MS.u_abs = (q31_t)hypot((double)q31_u_d_temp, (double)q31_u_q_temp); //absolute value of U in static frame
 				arm_sqrt_q31((q31_u_d_temp*q31_u_d_temp+q31_u_q_temp*q31_u_q_temp)<<1,&MS.u_abs);
 				MS.u_abs = (MS.u_abs>>16)+1;
 
@@ -473,8 +372,6 @@ if(ui8_Push_Assist_flag)uint16_current_target=(MS.assist_level*PUSHASSIST_CURREN
 
 	  if(uint16_current_target>PH_CURRENT_MAX) uint16_current_target = PH_CURRENT_MAX;
 	  if(uint32_PAS_counter > PAS_TIMEOUT) uint16_current_target = 0;
-	  //uint16_current_target = 0;
-
 #else
 	  uint16_mapped_throttle = map(ui16_reg_adc_value, THROTTLE_OFFSET , THROTTLE_MAX, 0, PH_CURRENT_MAX);
 	  if (uint16_mapped_PAS>uint16_mapped_throttle)
@@ -494,26 +391,10 @@ if(ui8_Push_Assist_flag)uint16_current_target=(MS.assist_level*PUSHASSIST_CURREN
 	  //enable PWM output, if power is wanted
 	  if (uint16_current_target>0&&!READ_BIT(TIM1->BDTR, TIM_BDTR_MOE)) {
 
-		  SET_BIT(TIM1->BDTR, TIM_BDTR_MOE);//TIM1->BDTR |= 1L<<15; //set MOE bit
+		  SET_BIT(TIM1->BDTR, TIM_BDTR_MOE);
 
 	  }
-/*
-	  if(q31_rotorposition_absolute>>24!=angle_old){
-	  			angle_old = q31_rotorposition_absolute>>24;
 
-	  			//buffer[0]=(char)(temp1);
-	  			//buffer[1]=(q31_teta_obs>>24);
-	  			buffer[0]=(char)(((atan2((double)temp2,(double)temp1)+3.1416)*40));
-	  			buffer[1]=(char)(((atan2((double)temp4,(double)temp3)+3.1416)*40));
-	  			buffer[2]=(char)(angle_old+128);
-	  			//buffer[3]=(char)temp4;
-	  			//buffer[4]=0xFF;
-	  			//q31_teta_obs=(q31_t)((float)buffer[0]/128.0*2147483648.0+1073741824.0);
-	  		HAL_UART_Transmit_DMA(&huart1, (uint8_t *)&buffer, 3);
-
-
-	  }
-*/
 #if (DISPLAY_TYPE == DEBUG_FAST_LOOP)
 	   if(ui8_debug_state==3 && ui8_UART_TxCplt_flag){
 	        sprintf_(buffer, "%d, %d, %d, %d, %d, %d\r\n", e_log[k][0], e_log[k][1], e_log[k][2],e_log[k][3],e_log[k][4],e_log[k][5]); //>>24
@@ -526,7 +407,6 @@ if(ui8_Push_Assist_flag)uint16_current_target=(MS.assist_level*PUSHASSIST_CURREN
 			if (k>299){
 				k=0;
 				ui8_debug_state=0;
-				//Obs_flag=0;
 			}
 		}
 #endif
@@ -540,7 +420,6 @@ if(ui8_Push_Assist_flag)uint16_current_target=(MS.assist_level*PUSHASSIST_CURREN
 		   if(READ_BIT(TIM1->BDTR, TIM_BDTR_MOE))temp3=1;
 		   else temp3=0;
 #if (DISPLAY_TYPE == DEBUG_SLOW_LOOP)
-		   //print values for debugging
 	  		sprintf_(buffer, "%d, %d, %d, %d, %d, %d, %d\r\n", uint16_current_target, MS.i_q, MS.Motor_state, ui16_reg_adc_value-THROTTLE_OFFSET, MS.Speed, MS.u_d, temp5);
 	  		i=0;
 		  while (buffer[i] != '\0')
@@ -552,15 +431,7 @@ if(ui8_Push_Assist_flag)uint16_current_target=(MS.assist_level*PUSHASSIST_CURREN
 		  ui32_tim1_counter=0;
 		  ui8_print_flag=0;
 	  	  }
-
-
-  /* USER CODE END WHILE */
-
-  /* USER CODE BEGIN 3 */
-
   }
-  /* USER CODE END 3 */
-
 }
 
 /**
@@ -822,7 +693,6 @@ static void MX_TIM1_Init(void)
     _Error_Handler(__FILE__, __LINE__);
   }
 
-  //sConfigOC.OCMode = TIM_OCMODE_ACTIVE; // war hier ein Bock?!
   sConfigOC.OCPolarity = TIM_OCPOLARITY_LOW;
   if (HAL_TIM_OC_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_4) != HAL_OK)
   {
@@ -1038,13 +908,6 @@ static void MX_GPIO_Init(void)
 
 }
 
-/* USER CODE BEGIN 4 */
-
-
-
-
-
-//Timer1 CC Channel4
 void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim)
 {
 	  if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_4) {
@@ -1065,7 +928,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		//HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
 		//HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
 
-		//temp5=q31_rotorposition_absolute>>24;
 		if(!Obs_flag)
 		{
 			// call FOC procedure, if PWM is enabled
@@ -1077,17 +939,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		else{
 			FOC_calculation(i16_ph1_current, i16_ph2_current, q31_teta_obs, uint16_current_target, &MS); //q31_teta_obs
 		}
-		//FOC_calculation(i16_ph1_current, i16_ph2_current, q31_rotorposition_absolute, uint16_current_target);
-
-		//q31_teta_obs += q31_delta_teta_obs;
 
 		//set PWM
 		TIM1->CCR1 =  (uint16_t) switchtime[0];
 		TIM1->CCR2 =  (uint16_t) switchtime[1];
 		TIM1->CCR3 =  (uint16_t) switchtime[2];
-
-		//HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
-
 	}
 }
 
@@ -1095,11 +951,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
 {
 	ui32_reg_adc_value_filter -= ui32_reg_adc_value_filter>>4;
-	ui32_reg_adc_value_filter += adcData[1]; //HAL_ADC_GetValue(hadc);
+	ui32_reg_adc_value_filter += adcData[1];
 	ui16_reg_adc_value = ui32_reg_adc_value_filter>>4;
-
-
-	//temp5=ui16_reg_adc_value-665;
 }
 
 //injected ADC
@@ -1170,20 +1023,13 @@ void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef* hadc)
 
 #endif
 
-
-
-
-
 	//extrapolate recent rotor position
 	ui16_tim2_recent = __HAL_TIM_GET_COUNTER(&htim2); // read in timertics since last event
-	//q31_rotorposition_absolute +=1342170*4;
-
 
 	if (ui16_tim2_recent < ui16_timertics && !ui8_overflow_flag){ //prevent angle running away at standstill
 		// float with division necessary!
 		q31_delta_teta=(q31_t) (715827883/ui16_timertics); //60deg / timertics between two hall events
 		q31_rotorposition_absolute = q31_rotorposition_hall + ui16_tim2_recent*q31_delta_teta; //interpolate angle between two hallevents by scaling timer2 tics
-
 
 	}
 	else
@@ -1223,7 +1069,6 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	   ui8_overflow_flag=0;
 
 	}
-	//temp6=ui16_timertics;
 	switch (ui8_hall_state) //according to UM1052 Fig 57, Page 72, 120° setup
 	{
 	case 5: //0°
@@ -1342,13 +1187,6 @@ void kingmeter_update(void)
 			{
 				ui8_Push_Assist_flag=0;
 			}
-	//	    if( KM.Settings.Reverse)i8_direction = -1;
-	//	    else i8_direction = 1;
-			//    MP.speedLimit=KM.Rx.SPEEDMAX_Limit;
-			//    MP.battery_current_max = KM.Rx.CUR_Limit_mA;
-
-
-
 		}
 #endif //end of kingmeter update
 
@@ -1424,11 +1262,7 @@ static void set_inj_channel(char state){
 
 			 }
 				break;
-
-
 	}
-
-
 }
 
 /* USER CODE END 4 */
@@ -1459,19 +1293,5 @@ void _Error_Handler(char *file, int line)
   */
 void assert_failed(uint8_t* file, uint32_t line)
 { 
-  /* USER CODE BEGIN 6 */
-  /* User can add his own implementation to report the file name and line number,
-     tex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
-  /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-/**
-  * @}
-  */
-
-/**
-  * @}
-  */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
