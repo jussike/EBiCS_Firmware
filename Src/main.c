@@ -33,7 +33,7 @@ DMA_HandleTypeDef hdma_usart1_rx;
 uint32_t ui32_tim1_counter=0;
 uint8_t ui8_hall_state=0;
 uint16_t ui16_tim2_recent=0;
-uint16_t ui16_timertics=5000; 					//timertics between two hall events for 60° interpolation
+uint16_t ui16_timertics=5000; 					//timertics between two hall events for 60Â° interpolation
 uint16_t ui16_reg_adc_value;
 uint32_t ui32_reg_adc_value_filter;
 uint16_t ui16_ph1_offset=0;
@@ -85,7 +85,7 @@ q31_t q31_delta_teta_obs;
 q31_t switchtime[3];
 uint16_t adcData[5];
 
-//Rotor angle scaled from degree to q31 for arm_math. -180°-->-2^31, 0°-->0, +180°-->+2^31
+//Rotor angle scaled from degree to q31 for arm_math. -180Â°-->-2^31, 0Â°-->0, +180Â°-->+2^31
 const q31_t DEG_0 = 0;
 const q31_t DEG_plus60 = 715827883;
 const q31_t DEG_plus120= 1431655765;
@@ -503,7 +503,7 @@ static void MX_ADC1_Init(void)
     /**Common config 
     */
   hadc1.Instance = ADC1;
-  hadc1.Init.ScanConvMode = ADC_SCAN_ENABLE; //Scan muß für getriggerte Wandlung gesetzt sein
+  hadc1.Init.ScanConvMode = ADC_SCAN_ENABLE; //Scan muÃŸ fÃ¼r getriggerte Wandlung gesetzt sein
   hadc1.Init.ContinuousConvMode = DISABLE;
   hadc1.Init.DiscontinuousConvMode = DISABLE;
   hadc1.Init.ExternalTrigConv = ADC_EXTERNALTRIGCONV_T3_TRGO;//ADC_EXTERNALTRIGCONV_T1_CC1;// // ADC_SOFTWARE_START; //
@@ -532,10 +532,10 @@ static void MX_ADC1_Init(void)
   sConfigInjected.InjectedNbrOfConversion = 1;
   sConfigInjected.InjectedSamplingTime = ADC_SAMPLETIME_1CYCLE_5;
   sConfigInjected.ExternalTrigInjecConv = ADC_EXTERNALTRIGINJECCONV_T1_CC4; // Hier bin ich nicht sicher ob Trigger out oder direkt CC4
-  sConfigInjected.AutoInjectedConv = DISABLE; //muß aus sein
+  sConfigInjected.AutoInjectedConv = DISABLE; //muÃŸ aus sein
   sConfigInjected.InjectedDiscontinuousConvMode = DISABLE;
   sConfigInjected.InjectedOffset = OFFSET_A;//1900;
-  HAL_ADC_Stop(&hadc1); //ADC muß gestoppt sein, damit Triggerquelle gesetzt werden kann.
+  HAL_ADC_Stop(&hadc1); //ADC muÃŸ gestoppt sein, damit Triggerquelle gesetzt werden kann.
   if (HAL_ADCEx_InjectedConfigChannel(&hadc1, &sConfigInjected) != HAL_OK)
   {
     _Error_Handler(__FILE__, __LINE__);
@@ -870,7 +870,7 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LIGHT_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : PAS_Pin */ // für Debug PAS als Ausgang
+  /*Configure GPIO pin : PAS_Pin */ // fÃ¼r Debug PAS als Ausgang
  /* GPIO_InitStruct.Pin = PAS_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
@@ -1069,24 +1069,24 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	   ui8_overflow_flag=0;
 
 	}
-	switch (ui8_hall_state) //according to UM1052 Fig 57, Page 72, 120° setup
+	switch (ui8_hall_state) //according to UM1052 Fig 57, Page 72, 120Â° setup
 	{
-	case 5: //0°
+	case 5: //0Â°
 		q31_rotorposition_hall = DEG_0 + SPEC_ANGLE;
 		break;
-	case 1: //60°
+	case 1: //60Â°
 		q31_rotorposition_hall = DEG_plus60 + SPEC_ANGLE;
 		break;
-	case 3: //120°
+	case 3: //120Â°
 		q31_rotorposition_hall = DEG_plus120 + SPEC_ANGLE;
 		break;
-	case 2: //180°
+	case 2: //180Â°
 		q31_rotorposition_hall = DEG_plus180 + SPEC_ANGLE; 	//overflow doesn't matter?!
 		break;
-	case 6: //240°-->-120°
+	case 6: //240Â°-->-120Â°
 		q31_rotorposition_hall = DEG_minus120 + SPEC_ANGLE;
 		break;
-	case 4: //300°-->-60°
+	case 4: //300Â°-->-60Â°
 		q31_rotorposition_hall = DEG_minus60 + SPEC_ANGLE;
 		break;
 
@@ -1210,19 +1210,19 @@ int32_t map (int32_t x, int32_t in_min, int32_t in_max, int32_t out_min, int32_t
 //assuming, a proper AD conversion takes 350 timer tics, to be confirmed. DT+TR+TS deadtime + noise subsiding + sample time
 void dyn_adc_state(q31_t angle){
 	if (switchtime[2]>switchtime[0] && switchtime[2]>switchtime[1]){
-		MS.char_dyn_adc_state = 1; // -90° .. +30°: Phase C at high dutycycles
+		MS.char_dyn_adc_state = 1; // -90Â° .. +30Â°: Phase C at high dutycycles
 		if(switchtime[2]>TRIGGER_THRESHOLD)TIM1->CCR4 =  switchtime[2]-TRIGGER_OFFSET_ADC;
 		else TIM1->CCR4 = TRIGGER_DEFAULT;
 	}
 
 	if (switchtime[0]>switchtime[1] && switchtime[0]>switchtime[2]) {
-		MS.char_dyn_adc_state = 2; // +30° .. 150° Phase A at high dutycycles
+		MS.char_dyn_adc_state = 2; // +30Â° .. 150Â° Phase A at high dutycycles
 		if(switchtime[0]>TRIGGER_THRESHOLD)TIM1->CCR4 =  switchtime[0]-TRIGGER_OFFSET_ADC;
 		else TIM1->CCR4 = TRIGGER_DEFAULT;
 	}
 
 	if (switchtime[1]>switchtime[0] && switchtime[1]>switchtime[2]){
-		MS.char_dyn_adc_state = 3; // +150 .. -90° Phase B at high dutycycles
+		MS.char_dyn_adc_state = 3; // +150 .. -90Â° Phase B at high dutycycles
 		if(switchtime[1]>TRIGGER_THRESHOLD)TIM1->CCR4 =  switchtime[1]-TRIGGER_OFFSET_ADC;
 		else TIM1->CCR4 = TRIGGER_DEFAULT;
 	}

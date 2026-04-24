@@ -1,7 +1,7 @@
 /*
 Library for King-Meter displays
 
-Copyright � 2015 Michael Fabry (Michael@Fabry.de)
+Copyright © 2015 Michael Fabry (Michael@Fabry.de)
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
