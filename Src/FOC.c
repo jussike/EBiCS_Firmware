@@ -388,7 +388,7 @@ void svpwm(q31_t q31_u_alpha, q31_t q31_u_beta)	{
 
 }
 
-// See http://cas.ensmp.fr/~praly/Telechargement/Journaux/2010-IEEE_TPEL-Lee-Hong-Nam-Ortega-Praly-Astolfi.pdf
+// See https://eggelectricunicycle.bitbucket.io/EmbeddedFiles/9-2010-IEEE_TPEL-Lee-Hong-Nam-Ortega-Praly-Astolfi.pdf
 void observer_update(long long v_alpha, long long v_beta, long long i_alpha, long long i_beta, q31_t *e_alpha, q31_t *e_beta) {
 
 	const long long L = (3LL * INDUCTANCE)>>1;
