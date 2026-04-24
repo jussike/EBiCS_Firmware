@@ -404,7 +404,7 @@ if(ui8_Push_Assist_flag)uint16_current_target=(MS.assist_level*PUSHASSIST_CURREN
 			ui8_UART_TxCplt_flag=0;
 			HAL_UART_Transmit_DMA(&huart1, (uint8_t *)&buffer, i);
 			k++;
-			if (k>299){
+			if (k>199){
 				k=0;
 				ui8_debug_state=0;
 			}

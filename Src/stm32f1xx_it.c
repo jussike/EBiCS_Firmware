@@ -415,7 +415,7 @@ void USART1_IRQHandler(void)
 	    //HAL_UART_DMAStop(&huart1);
 	    //
 	    //HAL_UART_RxCpltCallback(&huart1);
-	    UART_IdleItCallback();
+	    //UART_IdleItCallback();
 
 	  }
 	  else

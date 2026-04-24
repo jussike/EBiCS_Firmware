@@ -20,7 +20,7 @@ volatile long long fl_x1_obs=0;
 volatile long long fl_x2_obs=0;
 q31_t fl_e_alpha_obs;
 q31_t fl_e_beta_obs;
-q31_t e_log[300][6];
+q31_t e_log[200][6];
 
 q31_t q31_erps_counter=10000;
 q31_t q31_erps_filtered=5000;
@@ -136,7 +136,7 @@ uint16_t LUT_atan[101]={0,
 		16383
 } ;
 
-TIM_HandleTypeDef htim1;
+extern TIM_HandleTypeDef htim1;
 
 void FOC_calculation(int16_t int16_i_as, int16_t int16_i_bs, q31_t q31_teta, int16_t int16_i_q_target, MotorState_t* MS_FOC);
 void svpwm(q31_t q31_u_alpha, q31_t q31_u_beta);
@@ -215,8 +215,8 @@ if(MS_FOC->Motor_state){
 	}
 	q31_angle_old=q31_teta_obs;
 
-	if(!HAL_GPIO_ReadPin(PAS_GPIO_Port, PAS_Pin)&&ui8_debug_state==0)
-			{
+	if(!HAL_GPIO_ReadPin(PAS_GPIO_Port, PAS_Pin) && ui8_debug_state==0)
+	{
 		e_log[z][0]=temp1;//fl_e_alpha_obs;
 		e_log[z][1]=temp2;//fl_e_beta_obs;
 		e_log[z][2]=temp3;//(q31_t)q31_teta_obs>>24;
@@ -225,12 +225,16 @@ if(MS_FOC->Motor_state){
 		e_log[z][5]=temp6;
 		z++;
 		if(z>150) Obs_flag=1;
-		if (z>299)
-		{z=0;
-
-		ui8_debug_state=2;}
-			}
-	else {if(ui8_debug_state==2)ui8_debug_state=3;;}
+		if (z>199)
+		{
+          z=0;
+          ui8_debug_state=2;
+        }
+	}
+	else if (ui8_debug_state==2)
+    {
+      ui8_debug_state=3;
+    }
 	//call SVPWM calculation
 
 	svpwm(q31_u_alpha, q31_u_beta);
