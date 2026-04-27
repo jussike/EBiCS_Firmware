@@ -2,7 +2,6 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 #include "stdint.h"
-
 #define DISPLAY_TYPE_KINGMETER_618U (1<<4)                  // King-Meter 618U protocol (KM5s, EBS-LCD2, J-LCD, SW-LCD)
 #define DISPLAY_TYPE_KINGMETER_901U (1<<8)                  // King-Meter 901U protocol (KM5s)
 #define DISPLAY_TYPE_KINGMETER      (DISPLAY_TYPE_KINGMETER_618U|DISPLAY_TYPE_KINGMETER_901U|DISPLAY_TYPE_KINGMETER_FISCHER_1822)
@@ -25,13 +24,12 @@
 #define PH_CURRENT_MAX 300			//iq value (phase current in rotating frame), not calibrated yet
 
 #define P_FACTOR_I_Q 0.01				//proportional factor for PI control of iq
-#define I_FACTOR_I_Q 0.008			//integral factor for PI control of iq
+#define I_FACTOR_I_Q 0.001 			//integral factor for PI control of iq
 #define P_FACTOR_I_D 1L				//proportional factor for PI control of id
 #define I_FACTOR_I_D 1L				//integral factor for PI control of id
 
 
-//#define SPEC_ANGLE  -811271600L		//Shengyi Mittelmotor per trial and error
-#define SPEC_ANGLE  -1312351118L		//Shengyi Heckmotor aus Fischer ETH1606 per trial and error
+#define SPEC_ANGLE (-1431655765L+(2*178956970L))  // Change 178956970 (30 degrees) at once until transition is smooth. Also measure current of phase and find minimum.
 #define FILTER_DELAY 59652323<<4	 //1073741824L	// for angle correction of i_alfa + i_beta
 
 #define OFFSET_A 1993 //1025 				//Offset of current sensing phase A
@@ -43,10 +41,10 @@
 #define CAL_I 38LL<<8					// ADC * 37,5 mA/Digit. Strom kommt in mA *2^-8 im Observer an. Siehe Post Nr. 99 im Thread (für 12 FET)
 
 //Constants for Motor model of observer
-#define INDUCTANCE	11LL		//9 Hoverboard,6 BionX,war nach Messung 13 (mit einfachem LCR-Tester)		//H = V*s/A Induktivität in µH/100 Shengyi hat 200µHenry Induktivität 2^16*0,0002 -->>>16 in Observer um auf Henry zukommen
-#define RESISTANCE 120LL		//220 BionX,Für ShengyiMM 80	//Ohm = V/A Widerstand in Shengi ist 117mOhm -->2^9*0,117 >>9 in Observer um auf Ohm zu kommen.
-#define FLUX_LINKAGE 2000LL			//2400 BionX,Für ShengyiMM 1800| V*s/rad von Hand angepasst
-#define GAMMA 13LL					//Für ShengyiMM 10| per trial and error
+#define INDUCTANCE	3LL		//9 Hoverboard,6 BionX,war nach Messung 13 (mit einfachem LCR-Tester)		//H = V*s/A Induktivität in µH/100 Shengyi hat 200µHenry Induktivität 2^16*0,0002 -->>>16 in Observer um auf Henry zukommen
+#define RESISTANCE 180LL		//220 BionX,Für ShengyiMM 80	//Ohm = V/A Widerstand in Shengi ist 117mOhm -->2^9*0,117 >>9 in Observer um auf Ohm zu kommen.
+#define FLUX_LINKAGE 1938LL			//2400 BionX,Für ShengyiMM 1800| V*s/rad von Hand angepasst
+#define GAMMA 10LL					//Für ShengyiMM 10| per trial and error | If the motor loses sync under load, try increasing it. If it vibrates or is noisy at high speed, try decreasing it.
 
 
 #define _T 2048						//Periode des Timers1 zur Einstellung der PWM Frequenz 2048 ergibt 16kHz
