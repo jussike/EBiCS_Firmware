@@ -3,6 +3,7 @@
 #include "FOC.h"
 #include "stm32f1xx_hal.h"
 #include <arm_math.h>
+#include "print.h"
 
 long long	temp1;
 long long	temp2;
@@ -186,6 +187,7 @@ void FOC_calculation(int16_t int16_i_as, int16_t int16_i_bs, q31_t q31_teta, int
 
 	if(q31_i_q>(PH_CURRENT_MAX<<2)){
 		TIM1->BDTR &= ~(1L<<15);		//disable PWM if overcurrent detected
+		printf_("Over current! %ld > %ld\r\n", q31_i_q, PH_CURRENT_MAX<<2);
 		while(1){}						//stay here until hard reset
 	}
 	//Control iq and id

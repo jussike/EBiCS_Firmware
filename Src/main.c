@@ -1279,6 +1279,7 @@ void _Error_Handler(char *file, int line)
   /* User can add his own implementation to report the HAL error return state */
   while(1)
   {
+      printf_("_ERROR_HANDLER\r\n");
   }
   /* USER CODE END Error_Handler_Debug */
 }
