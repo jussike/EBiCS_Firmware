@@ -84,7 +84,7 @@ q31_t q31_delta_teta_obs;
 
 q31_t switchtime[3];
 uint16_t adcData[5];
-
+uint16_t throttle=0;
 //Rotor angle scaled from degree to q31 for arm_math. -180°-->-2^31, 0°-->0, +180°-->+2^31
 const q31_t DEG_0 = 0;
 const q31_t DEG_plus60 = 715827883;
@@ -373,7 +373,20 @@ if(ui8_Push_Assist_flag)uint16_current_target=(MS.assist_level*PUSHASSIST_CURREN
 	  if(uint16_current_target>PH_CURRENT_MAX) uint16_current_target = PH_CURRENT_MAX;
 	  if(uint32_PAS_counter > PAS_TIMEOUT) uint16_current_target = 0;
 #else
-	  uint16_mapped_throttle = map(ui16_reg_adc_value, THROTTLE_OFFSET , THROTTLE_MAX, 0, PH_CURRENT_MAX);
+	  if (HAL_GPIO_ReadPin(PAS_EXTI8_GPIO_Port, PAS_EXTI8_Pin) == GPIO_PIN_RESET)
+	  {
+	      throttle += 3;
+	  }
+	  else
+	  {
+	      throttle = 0;
+	      if (READ_BIT(TIM1->BDTR, TIM_BDTR_MOE))
+	      {
+	          CLEAR_BIT(TIM1->BDTR, TIM_BDTR_MOE);
+	      }
+
+	  }
+	  uint16_mapped_throttle = map(throttle, THROTTLE_OFFSET , THROTTLE_MAX, 0, PH_CURRENT_MAX);
 	  if (uint16_mapped_PAS>uint16_mapped_throttle)
 
 	  {
@@ -878,7 +891,7 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pins : Speed_EXTI5_Pin PAS_EXTI8_Pin */
   GPIO_InitStruct.Pin = Speed_EXTI5_Pin|PAS_EXTI8_Pin|PAS2_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
@@ -1098,6 +1111,15 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	if(GPIO_Pin == PAS_EXTI8_Pin)
 	{
 		ui8_PAS_flag = 1;
+		if (HAL_GPIO_ReadPin(PAS_EXTI8_GPIO_Port, PAS_EXTI8_Pin) == GPIO_PIN_SET)
+		{
+			throttle = 0;
+			if (READ_BIT(TIM1->BDTR, TIM_BDTR_MOE))
+			{
+			   CLEAR_BIT(TIM1->BDTR, TIM_BDTR_MOE);
+			}
+
+		}
 	}
 
 	//Speed processing
