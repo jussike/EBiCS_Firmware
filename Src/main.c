@@ -339,9 +339,9 @@ int main(void) {
 	  }
 
 	  //throttle and PAS current target setting
-if(ui8_Push_Assist_flag)uint16_current_target=(MS.assist_level*PUSHASSIST_CURRENT)>>8; //does not work for BAFANG and Kunteng protocol actually
+	  if(ui8_Push_Assist_flag)uint16_current_target=(MS.assist_level*PUSHASSIST_CURRENT)>>8; //does not work for BAFANG and Kunteng protocol actually
 		// last priority normal ride conditiones
-		else {
+	  else {
 
 #if (DISPLAY_TYPE == DISPLAY_TYPE_KINGMETER_618U)
 	  uint16_mapped_PAS = map(uint32_PAS, RAMP_END, PAS_TIMEOUT, (PH_CURRENT_MAX*(int32_t)(KM.Rx.AssistLevel-1))>>2, 0); // level in range 1...5
@@ -388,8 +388,8 @@ if(ui8_Push_Assist_flag)uint16_current_target=(MS.assist_level*PUSHASSIST_CURREN
 
 #endif
 
-	  uint16_current_target = map(MS.Speed, 25 , 45, 0, uint16_current_target);
-		}//end current target calculation
+	  uint16_current_target = map(MS.Speed, 50, 60, 0, uint16_current_target);
+	  }//end current target calculation         // last priority normal ride conditiones
 	  //enable PWM output, if power is wanted
 	  if (uint16_current_target>0&&!READ_BIT(TIM1->BDTR, TIM_BDTR_MOE)) {
 
