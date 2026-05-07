@@ -176,10 +176,16 @@ void FOC_calculation(int16_t int16_i_as, int16_t int16_i_bs, q31_t q31_teta, int
 	// Park transformation
 	arm_park_q31(q31_i_alpha_corr, q31_i_beta_corr, &q31_i_d, &q31_i_q, sinevalue, cosinevalue);
 
-
-	if(q31_i_q>(PH_CURRENT_SOFT_LIMIT<<2)){
-	    q31_i_q = PH_CURRENT_SOFT_LIMIT<<2;
+	if (q31_i_q > PH_CURRENT_SOFT_LIMIT<<2)
+	{
+	    q31_t const excess = q31_i_q - PH_CURRENT_SOFT_LIMIT<<2;
+	    q31_i_q = PH_CURRENT_SOFT_LIMIT<<2 + (excess >> 1);
+	    if (q31_i_q > PH_CURRENT_HARD_LIMIT<<2)
+	    {
+	        q31_i_q = PH_CURRENT_HARD_LIMIT<<2;
+	    }
 	}
+
 	q31_i_q_fil -= q31_i_q_fil>>4;
 	q31_i_q_fil += q31_i_q;
 	MS_FOC->i_q=q31_i_q_fil>>4;
