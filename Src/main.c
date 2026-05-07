@@ -100,7 +100,6 @@ int16_t wheel_time = 1000;							//duration of one wheel rotation for speed calc
 int16_t current_display;							//pepared battery current for display
 int16_t throttle_stat;								//throttle value, not linked to ADC-Value yet
 int16_t poti_stat;									//scaled assist level
-q31_t startup_counter=0;
 int16_t tim1cc4=1948;									//cc4 value of timer 1 for injected ADC timing
 volatile uint8_t ui8_Push_Assist_flag=0;
 
@@ -277,20 +276,10 @@ int main(void) {
 
 	  //PI-control processing
 	  if(PI_flag){
-
-		  if(!MS.Motor_state&&uint16_current_target>0){
-			  MS.u_q =  PI_control_i_q(MS.i_q, 160);
-			  uint16_current_target/=(21-startup_counter);
-			  	startup_counter++;
-			  	if (startup_counter>20){
-			  		MS.Motor_state=1;
-			  		startup_counter=0;
-			  	}
-			  	temp5=startup_counter;
-			  }
-
-
-
+	      if(!MS.Motor_state&&uint16_current_target>0)
+	      {
+	          MS.u_q =  PI_control_i_q(MS.i_q, 200);
+	      }
 		  else {
 
 			  q31_u_q_temp =  PI_control_i_q(MS.i_q, (q31_t) uint16_current_target);

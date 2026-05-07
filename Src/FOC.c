@@ -12,7 +12,7 @@ q31_t	temp4;
 q31_t	temp5;
 q31_t	temp6;
 q31_t z;
-
+q31_t startup_counter=0;
 q31_t q31_i_q_fil = 0;
 q31_t q31_i_d_fil = 0;
 q31_t q31_u_d = 0;
@@ -193,6 +193,17 @@ void FOC_calculation(int16_t int16_i_as, int16_t int16_i_bs, q31_t q31_teta, int
 	//Control iq and id
 
 	PI_flag=1;
+	if(!MS_FOC->Motor_state&&int16_i_q_target>20)
+	{
+	    MS_FOC->u_d=startup_counter>>4;
+	    q31_teta_obs+=(2684354);
+	    startup_counter++;
+	    if (startup_counter>3000)
+	    {
+	        MS_FOC->Motor_state=1;
+	        startup_counter=0;
+	    }
+	}
 
 	//inverse Park transformation
 	arm_inv_park_q31(MS_FOC->u_d, MS_FOC->u_q, &q31_u_alpha, &q31_u_beta, -sinevalue, cosinevalue);
