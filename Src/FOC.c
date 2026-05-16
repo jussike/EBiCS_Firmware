@@ -296,8 +296,8 @@ q31_t PI_control_i_d (q31_t ist, q31_t soll)
     static q31_t q31_d_i = 0;
     static q31_t q31_d_dc = 0;
 
-    q31_p=((soll - ist)*P_FACTOR_I_D)>>6;
-    q31_d_i+=((soll - ist)*I_FACTOR_I_D)>>4;
+    q31_p=((soll - ist)*P_FACTOR_I_D)>>5;
+    q31_d_i+=((soll - ist)*I_FACTOR_I_D)>>3;
 
     if (q31_d_i<-1800)q31_d_i=-1800;
     if (q31_d_i>1800)q31_d_i=1800;

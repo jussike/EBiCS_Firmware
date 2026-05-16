@@ -22,16 +22,16 @@
 #define PAS_TIMEOUT 12000			//time tics @ 16kHz untils motor stops
 #define RAMP_END 4000					//time tics @ 16kHz where motor reaches full level power
 #define PH_CURRENT_MAX 300			//iq value (phase current in rotating frame), not calibrated yet
-#define PH_CURRENT_SOFT_LIMIT 200
-#define PH_CURRENT_HARD_LIMIT 280
+#define PH_CURRENT_SOFT_LIMIT 280
+#define PH_CURRENT_HARD_LIMIT 290
 
-#define P_FACTOR_I_Q 0.01				//proportional factor for PI control of iq
-#define I_FACTOR_I_Q 0.001 			//integral factor for PI control of iq
+#define P_FACTOR_I_Q 0.012				//proportional factor for PI control of iq
+#define I_FACTOR_I_Q 0.002 			//integral factor for PI control of iq
 #define P_FACTOR_I_D 1L				//proportional factor for PI control of id
 #define I_FACTOR_I_D 1L				//integral factor for PI control of id
 
 
-#define SPEC_ANGLE (-1431655765L+(2*178956970L))  // Change 178956970 (30 degrees) at once until transition is smooth. Also measure current of phase and find minimum.
+#define SPEC_ANGLE (-1431655765L+(3*178956970L))  // Change 178956970 (15 degrees) at once until transition is smooth. Also measure current of phase and find minimum.
 #define FILTER_DELAY 59652323<<4	 //1073741824L	// for angle correction of i_alfa + i_beta
 
 #define OFFSET_A 1993 //1025 				//Offset of current sensing phase A
@@ -39,14 +39,14 @@
 #define OFFSET_C 1966 //1042				//Offset of current sensing phase C
 
 //LeftShift um bei R*L in vernünftigen Ganzzahlbereich zu kommen
-#define CAL_V 15LL<<8			  		// ADC*25,6 mV/Digit*1/SQRT(3)=15,  bei Übergabe an Observerfunktion >>11 um Dutycycle reinzurechnen.  Im Oberserver kommt Spannung in mV *2^-8 an.
-#define CAL_I 38LL<<8					// ADC * 37,5 mA/Digit. Strom kommt in mA *2^-8 im Observer an. Siehe Post Nr. 99 im Thread (für 12 FET)
+#define CAL_V 18LL<<8			  		// ADC*25,6 mV/Digit*1/SQRT(3)=15,  bei Übergabe an Observerfunktion >>11 um Dutycycle reinzurechnen.  Im Oberserver kommt Spannung in mV *2^-8 an.
+#define CAL_I 28LL<<8 //#define CAL_I 38LL<<8					// ADC * 37,5 mA/Digit. Strom kommt in mA *2^-8 im Observer an. Siehe Post Nr. 99 im Thread (für 12 FET)
 
 //Constants for Motor model of observer
 #define INDUCTANCE	3LL		//9 Hoverboard,6 BionX,war nach Messung 13 (mit einfachem LCR-Tester)		//H = V*s/A Induktivität in µH/100 Shengyi hat 200µHenry Induktivität 2^16*0,0002 -->>>16 in Observer um auf Henry zukommen
 #define RESISTANCE 180LL		//220 BionX,Für ShengyiMM 80	//Ohm = V/A Widerstand in Shengi ist 117mOhm -->2^9*0,117 >>9 in Observer um auf Ohm zu kommen.
 #define FLUX_LINKAGE 1938LL			//2400 BionX,Für ShengyiMM 1800| V*s/rad von Hand angepasst
-#define GAMMA 10LL					//Für ShengyiMM 10| per trial and error | If the motor loses sync under load, try increasing it. If it vibrates or is noisy at high speed, try decreasing it.
+#define GAMMA 15LL					//Für ShengyiMM 10| per trial and error | If the motor loses sync under load, try increasing it. If it vibrates or is noisy at high speed, try decreasing it.
 
 
 #define _T 2048						//Periode des Timers1 zur Einstellung der PWM Frequenz 2048 ergibt 16kHz

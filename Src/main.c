@@ -278,7 +278,7 @@ int main(void) {
 	  if(PI_flag){
 	      if(!MS.Motor_state&&uint16_current_target>0)
 	      {
-	          MS.u_q =  PI_control_i_q(MS.i_q, 200);
+	          MS.u_q =  PI_control_i_q(MS.i_q, 300);
 	      }
 		  else {
 
@@ -388,7 +388,7 @@ int main(void) {
 
 #endif
 
-	  uint16_current_target = map(MS.Speed, 50, 60, 0, uint16_current_target);
+	  //uint16_current_target = map(MS.Speed, 50, 60, 0, uint16_current_target);
 	  }//end current target calculation         // last priority normal ride conditiones
 	  //enable PWM output, if power is wanted
 	  if (uint16_current_target>0&&!READ_BIT(TIM1->BDTR, TIM_BDTR_MOE)) {
