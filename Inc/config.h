@@ -22,6 +22,7 @@
 #define PAS_TIMEOUT 12000			//time tics @ 16kHz untils motor stops
 #define RAMP_END 4000					//time tics @ 16kHz where motor reaches full level power
 #define PH_CURRENT_MAX 300			//iq value (phase current in rotating frame), not calibrated yet
+#define PH_CURRENT_SOFT_LIMIT 250
 
 #define P_FACTOR_I_Q 0.01				//proportional factor for PI control of iq
 #define I_FACTOR_I_Q 0.001 			//integral factor for PI control of iq
