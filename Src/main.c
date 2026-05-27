@@ -362,19 +362,46 @@ int main(void) {
 	  if(uint16_current_target>PH_CURRENT_MAX) uint16_current_target = PH_CURRENT_MAX;
 	  if(uint32_PAS_counter > PAS_TIMEOUT) uint16_current_target = 0;
 #else
+	  static int go = 0;
+	  static int go_debounce = 0;
+	  static int has_toggled = 0;
+
 	  if (HAL_GPIO_ReadPin(PAS_EXTI8_GPIO_Port, PAS_EXTI8_Pin) == GPIO_PIN_RESET)
 	  {
-	      throttle += 3;
+	      if (go_debounce < 10) go_debounce++;
+	  }
+	  else
+	  {
+	      if (go_debounce > -10) go_debounce--;
+	  }
+
+	  if (go_debounce >= 10)
+	  {
+	      if (!has_toggled)
+	      {
+	          go = !go;
+	          has_toggled = 1;
+	      }
+	  }
+	  else if (go_debounce <= -10)
+	  {
+	      has_toggled = 0;
+	      go_debounce = 0;
+	  }
+
+	  if (go)
+	  {
+	      throttle = (throttle + 3 > THROTTLE_MAX) ? THROTTLE_MAX : throttle + 3;
 	  }
 	  else
 	  {
 	      throttle = 0;
-	      if (READ_BIT(TIM1->BDTR, TIM_BDTR_MOE))
+	      if (TIM1->BDTR & TIM_BDTR_MOE)
 	      {
-	          CLEAR_BIT(TIM1->BDTR, TIM_BDTR_MOE);
+	          TIM1->BDTR &= ~TIM_BDTR_MOE;
 	      }
-
 	  }
+
 	  uint16_mapped_throttle = map(throttle, THROTTLE_OFFSET , THROTTLE_MAX, 0, PH_CURRENT_MAX);
 	  if (uint16_mapped_PAS>uint16_mapped_throttle)
 
@@ -1095,21 +1122,6 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	} // end case
 
 	} //end if
-
-	//PAS processing
-	if(GPIO_Pin == PAS_EXTI8_Pin)
-	{
-		ui8_PAS_flag = 1;
-		if (HAL_GPIO_ReadPin(PAS_EXTI8_GPIO_Port, PAS_EXTI8_Pin) == GPIO_PIN_SET)
-		{
-			throttle = 0;
-			if (READ_BIT(TIM1->BDTR, TIM_BDTR_MOE))
-			{
-			   CLEAR_BIT(TIM1->BDTR, TIM_BDTR_MOE);
-			}
-
-		}
-	}
 
 	//Speed processing
 	if(GPIO_Pin == Speed_EXTI5_Pin)
