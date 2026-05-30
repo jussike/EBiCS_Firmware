@@ -39,7 +39,7 @@
 #define OFFSET_C 1966 //1042				//Offset of current sensing phase C
 
 //LeftShift um bei R*L in vernünftigen Ganzzahlbereich zu kommen
-#define CAL_V 18LL<<8			  		// ADC*25,6 mV/Digit*1/SQRT(3)=15,  bei Übergabe an Observerfunktion >>11 um Dutycycle reinzurechnen.  Im Oberserver kommt Spannung in mV *2^-8 an.
+#define CAL_V 15LL<<8			  		// ADC*25,6 mV/Digit*1/SQRT(3)=15,  bei Übergabe an Observerfunktion >>11 um Dutycycle reinzurechnen.  Im Oberserver kommt Spannung in mV *2^-8 an.
 #define CAL_I 28LL<<8 //#define CAL_I 38LL<<8					// ADC * 37,5 mA/Digit. Strom kommt in mA *2^-8 im Observer an. Siehe Post Nr. 99 im Thread (für 12 FET)
 
 //Constants for Motor model of observer
