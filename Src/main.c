@@ -393,7 +393,10 @@ int main(void) {
 	      has_toggled = 0;
 	      go_debounce = 0;
 	  }
-
+	  if (HAL_GPIO_ReadPin(Brake_GPIO_Port, Brake_Pin) == GPIO_PIN_RESET)
+	  {
+	      go = 0;
+	  }
 	  if (go == 1)
 	  {
 	      throttle = (throttle + 3 > THROTTLE_MAX) ? THROTTLE_MAX : throttle + 3;
@@ -907,6 +910,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LIGHT_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : Brake_Pin */
+  GPIO_InitStruct.Pin = Brake_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(Brake_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PAS_Pin */ // für Debug PAS als Ausgang
  /* GPIO_InitStruct.Pin = PAS_Pin;

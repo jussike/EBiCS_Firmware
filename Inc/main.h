@@ -72,6 +72,8 @@
 #define LED_GPIO_Port GPIOB
 #define PAS_Pin GPIO_PIN_8
 #define PAS_GPIO_Port GPIOB
+#define Brake_Pin GPIO_PIN_11  // put a 15 here for new generation controllers!
+#define Brake_GPIO_Port GPIOA
 
 #define PAS2_Pin GPIO_PIN_10
 #define PAS2_GPIO_Port GPIOB
