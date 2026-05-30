@@ -368,14 +368,15 @@ int main(void) {
 
 	  if (HAL_GPIO_ReadPin(PAS_EXTI8_GPIO_Port, PAS_EXTI8_Pin) == GPIO_PIN_RESET)
 	  {
-	      if (go_debounce < 10) go_debounce++;
+	      go_debounce++;
 	  }
 	  else
 	  {
+	      if (go_debounce > 10) go_debounce = 0;
 	      if (go_debounce > -10) go_debounce--;
 	  }
 
-	  if (go_debounce >= 10)
+	  if (go_debounce == 10)
 	  {
 	      if (!has_toggled)
 	      {
@@ -383,15 +384,23 @@ int main(void) {
 	          has_toggled = 1;
 	      }
 	  }
+	  else if (go_debounce > 10000)
+	  {
+	      go = -1;
+	  }
 	  else if (go_debounce <= -10)
 	  {
 	      has_toggled = 0;
 	      go_debounce = 0;
 	  }
 
-	  if (go)
+	  if (go == 1)
 	  {
 	      throttle = (throttle + 3 > THROTTLE_MAX) ? THROTTLE_MAX : throttle + 3;
+	  }
+	  else if (go == -1)
+	  {
+	      throttle = (throttle + 3 > (THROTTLE_MAX>>2)*3) ? (THROTTLE_MAX>>2)*3 : throttle + 3;
 	  }
 	  else
 	  {
