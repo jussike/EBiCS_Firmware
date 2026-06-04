@@ -12,6 +12,7 @@ set(CPU_FLAGS
 
 set(SOURCES
     Src/main.c
+    Src/button_event.c
     Src/FOC.c
     Src/print.c
     Src/stm32f1xx_it.c

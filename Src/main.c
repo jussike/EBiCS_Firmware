@@ -16,7 +16,9 @@
 #endif
 
 #include "config.h"
+#include "button_event.h"
 #include <arm_math.h>
+#include <limits.h>
 
 ADC_HandleTypeDef hadc1;
 ADC_HandleTypeDef hadc2;
@@ -129,6 +131,11 @@ static void set_inj_channel(char state);
 void UART_IdleItCallback(void);
 
 int32_t map (int32_t x, int32_t in_min, int32_t in_max, int32_t out_min, int32_t out_max);
+
+bool read_pas_gpio_pin(void)
+{
+    return HAL_GPIO_ReadPin(PAS_EXTI8_GPIO_Port, PAS_EXTI8_Pin) == GPIO_PIN_RESET;
+}
 
 /**
   * @brief  The application entry point.
@@ -363,35 +370,20 @@ int main(void) {
 	  if(uint32_PAS_counter > PAS_TIMEOUT) uint16_current_target = 0;
 #else
 	  static int go = 0;
-	  static int go_debounce = 0;
-	  static int has_toggled = 0;
-
-	  if (HAL_GPIO_ReadPin(PAS_EXTI8_GPIO_Port, PAS_EXTI8_Pin) == GPIO_PIN_RESET)
+	  ButtonEvent_t button_event = check_button_events();
+	  switch (button_event)
 	  {
-	      go_debounce++;
-	  }
-	  else
-	  {
-	      if (go_debounce > 10) go_debounce = 0;
-	      if (go_debounce > -10) go_debounce--;
-	  }
-
-	  if (go_debounce == 10)
-	  {
-	      if (!has_toggled)
-	      {
+	      case NO_PRESS:
+	      break;
+	      case SINGLE_PRESS:
 	          go = !go;
-	          has_toggled = 1;
-	      }
-	  }
-	  else if (go_debounce > 10000)
-	  {
-	      go = -1;
-	  }
-	  else if (go_debounce <= -10)
-	  {
-	      has_toggled = 0;
-	      go_debounce = 0;
+	      break;
+	      case DOUBLE_PRESS:
+	          go = -1;
+	      break;
+	      case TRIPLE_PRESS:
+	          go = -2;
+	      break;
 	  }
 	  if (HAL_GPIO_ReadPin(Brake_GPIO_Port, Brake_Pin) == GPIO_PIN_RESET)
 	  {
@@ -404,6 +396,10 @@ int main(void) {
 	  else if (go == -1)
 	  {
 	      throttle = (throttle + 3 > (THROTTLE_MAX>>2)*3) ? (THROTTLE_MAX>>2)*3 : throttle + 3;
+	  }
+	  else if (go == -2)
+	  {
+	      throttle = (throttle + 3 > (THROTTLE_MAX>>3)*5) ? (THROTTLE_MAX>>3)*5 : throttle + 3;
 	  }
 	  else
 	  {
