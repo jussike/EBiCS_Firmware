@@ -79,7 +79,13 @@ q31_t q31_rotorposition_hall;
 char buffer[100];
 char TxBuff[14];
 uint8_t char_dyn_adc_state_old=1;
-q31_t	q31_u_abs=0;
+// Note: MS.u_abs is the voltage vector magnitude used throughout the control loop.
+// The field weakening function reads MS.u_abs from the previous cycle, which is
+// intentional and safe at 8 kHz. MS.u_abs is explicitly initialised to 0 before
+// the main loop so the first cycle is always safe.
+// Field weakening releases at FIELD_WEAKENING_GAIN counts/cycle; at 8 kHz with
+// FIELD_WEAKENING_GAIN=2 and FIELD_WEAKENING_MAX_ID=133 this means a worst-case
+// release time of ~133/2/8000 = ~8 ms, which is fast enough for safe braking.
 q31_t q31_teta_obs;
 q31_t q31_delta_teta;
 q31_t q31_delta_teta_obs;
@@ -298,6 +304,8 @@ int main(void) {
 
 			  q31_u_q_temp =  PI_control_i_q(MS.i_q, (q31_t) uint16_current_target);
 
+			  // Battery current estimate uses previous cycle's u_abs. This is a
+			  // one-cycle lag and is acceptable for a slow display update value.
 			  q31_t_Battery_Current_accumulated -= q31_t_Battery_Current_accumulated>>8;
 			  q31_t_Battery_Current_accumulated += ((MS.i_q*MS.u_abs)>>11)*(uint16_t)(CAL_I>>8);
 
