@@ -1,0 +1,2 @@
+arm_sqrt_q31((q31_u_d_temp*q31_u_d_temp + q31_u_q_temp*q31_u_q_temp)<<1, &MS.u_abs);
+MS.u_abs = (MS.u_abs>>16)+1;

@@ -162,14 +162,22 @@ int utils_truncate_number_abs(long long *number, q31_t max);
  * A negative id reference is ramped up proportionally to the excess voltage,
  * which reduces the rotor flux and allows higher speeds.
  *
+ * Note: u_abs is from the previous control cycle. This one-cycle lag is
+ * acceptable in a digital control loop running at 8 kHz.
+ *
  * Safety measures:
  *  - id_fw is always <= 0 (never adds flux, only weakens).
  *  - id_fw is clamped to -FIELD_WEAKENING_MAX_ID.
  *  - id_fw is immediately reset to 0 when PWM output is disabled (e.g. brake,
  *    motor stop, overcurrent shutdown).
  *  - When voltage headroom returns, id_fw ramps smoothly back to 0.
+ *  - The existing voltage vector limiter in main.c (chapter 4.10.1 of UM1052)
+ *    provides a hard backstop: if u_abs still exceeds _U_MAX after field
+ *    weakening, both u_d and u_q are scaled down proportionally, so the
+ *    inverter output never exceeds the DC bus voltage regardless of the
+ *    field weakening demand.
  *
- * @param  u_abs   Voltage vector magnitude in the same units as _U_MAX.
+ * @param  u_abs   Voltage vector magnitude from previous cycle (same units as _U_MAX).
  * @param  pwm_on  Non-zero when PWM output (TIM1 MOE) is active.
  * @return The new id target (negative or zero) to pass to PI_control_i_d().
  */
@@ -249,13 +257,15 @@ void FOC_calculation(int16_t int16_i_as, int16_t int16_i_bs, q31_t q31_teta, int
 	// Park transformation
 	arm_park_q31(q31_i_alpha_corr, q31_i_beta_corr, &q31_i_d, &q31_i_q, sinevalue, cosinevalue);
 
-	if (q31_i_q > PH_CURRENT_SOFT_LIMIT<<2)
+	// Soft/hard current limiting with correct operator precedence (parentheses required
+	// because << has lower precedence than + and - in C).
+	if (q31_i_q > (PH_CURRENT_SOFT_LIMIT<<2))
 	{
-	    q31_t const excess = q31_i_q - PH_CURRENT_SOFT_LIMIT<<2;
-	    q31_i_q = PH_CURRENT_SOFT_LIMIT<<2 + (excess >> 1);
-	    if (q31_i_q > PH_CURRENT_HARD_LIMIT<<2)
+	    q31_t const excess = q31_i_q - (PH_CURRENT_SOFT_LIMIT<<2);
+	    q31_i_q = (PH_CURRENT_SOFT_LIMIT<<2) + (excess >> 1);
+	    if (q31_i_q > (PH_CURRENT_HARD_LIMIT<<2))
 	    {
-	        q31_i_q = PH_CURRENT_HARD_LIMIT<<2;
+	        q31_i_q = (PH_CURRENT_HARD_LIMIT<<2);
 	    }
 	}
 

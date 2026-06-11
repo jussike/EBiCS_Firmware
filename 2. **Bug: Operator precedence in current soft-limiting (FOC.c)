@@ -1,0 +1,2 @@
+q31_t const excess = q31_i_q - PH_CURRENT_SOFT_LIMIT<<2;
+q31_i_q = PH_CURRENT_SOFT_LIMIT<<2 + (excess >> 1);

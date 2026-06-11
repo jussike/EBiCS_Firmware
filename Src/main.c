@@ -279,6 +279,7 @@ int main(void) {
 
     MS.Speed=5000;
     MS.Motor_state=0;
+    MS.u_abs=0; // Explicitly initialise so field weakening starts from a safe state.
 
     CLEAR_BIT(TIM1->BDTR, TIM_BDTR_MOE);
 
@@ -304,8 +305,12 @@ int main(void) {
 
 			  // Control id:
 			  // With field weakening enabled, compute a negative id reference
-			  // proportional to voltage saturation. Without field weakening,
-			  // simply regulate id to zero.
+			  // proportional to voltage saturation from the previous cycle.
+			  // Using the previous cycle's u_abs is intentional and acceptable
+			  // at 8 kHz. MS.u_abs is initialised to 0 so the first cycle is safe.
+			  // The voltage vector limiter below (UM1052 ch. 4.10.1) provides a
+			  // hard backstop: u_d and u_q are always scaled to stay within _U_MAX,
+			  // protecting the MOSFETs regardless of the field weakening demand.
 #ifdef FIELD_WEAKENING_ENABLED
 			  {
 			      uint8_t pwm_on = READ_BIT(TIM1->BDTR, TIM_BDTR_MOE) ? 1u : 0u;
