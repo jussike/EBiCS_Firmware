@@ -26,13 +26,18 @@ q31_t e_log[200][6];
 q31_t q31_erps_counter=10000;
 q31_t q31_erps_filtered=5000;
 
-
 q31_t q31_e_q_obs = 0;
 q31_t q31_e_d_obs = 0;
 q31_t q31_e_d_obs_fil = 0;
 
 char PI_flag=0;
 char Obs_flag=1;
+
+#ifdef FIELD_WEAKENING_ENABLED
+// Current field weakening id demand. Always <= 0.
+// Updated each PI cycle via update_field_weakening().
+static q31_t q31_id_fw = 0;
+#endif
 
 uint16_t LUT_atan[101]={0,
 		209,
@@ -146,6 +151,74 @@ q31_t PI_control_i_d (q31_t ist, q31_t soll);
 q31_t atan2_LUT(q31_t e_alpha, q31_t e_beta);
 void observer_update(long long v_alpha, long long v_beta, long long i_alpha, long long i_beta,  q31_t *e_alpha,q31_t *e_beta);
 int utils_truncate_number_abs(long long *number, q31_t max);
+
+#ifdef FIELD_WEAKENING_ENABLED
+/**
+ * @brief  Update field weakening id demand based on output voltage saturation.
+ *
+ * Principle: when the voltage vector magnitude (u_abs) exceeds a configurable
+ * fraction of the maximum modulation voltage (_U_MAX), the inverter is
+ * saturating and the motor cannot accelerate further without flux weakening.
+ * A negative id reference is ramped up proportionally to the excess voltage,
+ * which reduces the rotor flux and allows higher speeds.
+ *
+ * Safety measures:
+ *  - id_fw is always <= 0 (never adds flux, only weakens).
+ *  - id_fw is clamped to -FIELD_WEAKENING_MAX_ID.
+ *  - id_fw is immediately reset to 0 when PWM output is disabled (e.g. brake,
+ *    motor stop, overcurrent shutdown).
+ *  - When voltage headroom returns, id_fw ramps smoothly back to 0.
+ *
+ * @param  u_abs   Voltage vector magnitude in the same units as _U_MAX.
+ * @param  pwm_on  Non-zero when PWM output (TIM1 MOE) is active.
+ * @return The new id target (negative or zero) to pass to PI_control_i_d().
+ */
+q31_t update_field_weakening(q31_t u_abs, uint8_t pwm_on)
+{
+    // Safety: immediately zero field weakening when drive is disabled.
+    if (!pwm_on)
+    {
+        q31_id_fw = 0;
+        return 0;
+    }
+
+    // Threshold above which field weakening activates (e.g. 90 % of _U_MAX).
+    const q31_t fw_threshold = (_U_MAX * (q31_t)FIELD_WEAKENING_THRESHOLD_PCT) >> 8;
+
+    if (u_abs > fw_threshold)
+    {
+        // Voltage is saturating: ramp id_fw more negative.
+        q31_t excess = u_abs - fw_threshold;
+        q31_id_fw -= (excess * (q31_t)FIELD_WEAKENING_GAIN) >> 8;
+
+        // Clamp to the configured maximum field weakening current.
+        if (q31_id_fw < -(q31_t)FIELD_WEAKENING_MAX_ID)
+        {
+            q31_id_fw = -(q31_t)FIELD_WEAKENING_MAX_ID;
+        }
+    }
+    else
+    {
+        // Voltage headroom available: ramp id_fw back toward zero.
+        q31_id_fw += (q31_t)FIELD_WEAKENING_GAIN;
+        if (q31_id_fw > 0)
+        {
+            q31_id_fw = 0;
+        }
+    }
+
+    return q31_id_fw;
+}
+
+/**
+ * @brief  Return the current field weakening id demand without updating it.
+ *         Useful for diagnostics / debug logging.
+ */
+q31_t get_field_weakening_id(void)
+{
+    return q31_id_fw;
+}
+#endif /* FIELD_WEAKENING_ENABLED */
 
 void FOC_calculation(int16_t int16_i_as, int16_t int16_i_bs, q31_t q31_teta, int16_t int16_i_q_target, MotorState_t* MS_FOC)
 {

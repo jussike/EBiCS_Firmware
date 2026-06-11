@@ -57,4 +57,28 @@
 #define PUSHASSIST_CURRENT 300
 #define WHEEL_CIRCUMFERENCE 2200
 
+// ---------------------------------------------------------------------------
+// Field Weakening Configuration
+// ---------------------------------------------------------------------------
+// Uncomment to enable field weakening. When enabled, a negative id reference
+// is automatically generated when the voltage vector saturates, allowing the
+// motor to run above its base speed.
+#define FIELD_WEAKENING_ENABLED
+
+// Maximum negative d-axis current allowed for field weakening, in the same
+// internal units as PH_CURRENT_MAX (i.e. ADC counts in the rotating frame).
+// With CAL_I = 28<<8 = 7168 counts/A, 5 A corresponds to ~133 counts.
+// Increase this value to allow more field weakening (higher top speed) at
+// the cost of higher motor losses and heat.
+#define FIELD_WEAKENING_MAX_ID  133
+
+// Voltage utilization level (as a fraction of _U_MAX, scaled 0..256) above
+// which field weakening starts to activate. 230/256 ≈ 90 % of _U_MAX.
+// Lower this value to start field weakening earlier (smoother transition).
+#define FIELD_WEAKENING_THRESHOLD_PCT  230
+
+// Ramp rate for the field weakening id demand. Higher values react faster to
+// voltage saturation but may cause oscillation. Lower values are smoother.
+#define FIELD_WEAKENING_GAIN  2
+
 #endif

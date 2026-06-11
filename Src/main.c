@@ -132,6 +132,12 @@ void UART_IdleItCallback(void);
 
 int32_t map (int32_t x, int32_t in_min, int32_t in_max, int32_t out_min, int32_t out_max);
 
+// Forward declarations for field weakening functions defined in FOC.c
+#ifdef FIELD_WEAKENING_ENABLED
+q31_t update_field_weakening(q31_t u_abs, uint8_t pwm_on);
+q31_t get_field_weakening_id(void);
+#endif
+
 bool read_pas_gpio_pin(void)
 {
     return HAL_GPIO_ReadPin(PAS_EXTI8_GPIO_Port, PAS_EXTI8_Pin) == GPIO_PIN_RESET;
@@ -296,8 +302,19 @@ int main(void) {
 
 			  MS.Battery_Current = q31_t_Battery_Current_accumulated>>8; //Battery current in mA
 
-			  	//Control id
+			  // Control id:
+			  // With field weakening enabled, compute a negative id reference
+			  // proportional to voltage saturation. Without field weakening,
+			  // simply regulate id to zero.
+#ifdef FIELD_WEAKENING_ENABLED
+			  {
+			      uint8_t pwm_on = READ_BIT(TIM1->BDTR, TIM_BDTR_MOE) ? 1u : 0u;
+			      q31_t id_fw_target = update_field_weakening(MS.u_abs, pwm_on);
+			      q31_u_d_temp = -PI_control_i_d(MS.i_d, id_fw_target);
+			  }
+#else
 			  q31_u_d_temp = -PI_control_i_d(MS.i_d, 0); //control direct current to zero
+#endif
 
 			  	//limit voltage in rotating frame, refer chapter 4.10.1 of UM1052
 				arm_sqrt_q31((q31_u_d_temp*q31_u_d_temp+q31_u_q_temp*q31_u_q_temp)<<1,&MS.u_abs);
