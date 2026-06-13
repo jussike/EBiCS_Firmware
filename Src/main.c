@@ -93,6 +93,8 @@ q31_t q31_delta_teta_obs;
 q31_t switchtime[3];
 uint16_t adcData[5];
 uint16_t throttle=0;
+int go_level = 0;
+
 //Rotor angle scaled from degree to q31 for arm_math. -180°-->-2^31, 0°-->0, +180°-->+2^31
 const q31_t DEG_0 = 0;
 const q31_t DEG_plus60 = 715827883;
@@ -321,8 +323,12 @@ int main(void) {
 			  // protecting the MOSFETs regardless of the field weakening demand.
 #ifdef FIELD_WEAKENING_ENABLED
 			  {
-			      uint8_t pwm_on = READ_BIT(TIM1->BDTR, TIM_BDTR_MOE) ? 1u : 0u;
-			      q31_t id_fw_target = update_field_weakening(MS.u_abs, pwm_on);
+			      uint8_t use_field_weakening = 0;
+			      if (go_level == 1 && READ_BIT(TIM1->BDTR, TIM_BDTR_MOE))
+			      {
+			          use_field_weakening = 1;
+			      }
+			      q31_t id_fw_target = update_field_weakening(MS.u_abs, use_field_weakening);
 			      q31_u_d_temp = -PI_control_i_d(MS.i_d, id_fw_target);
 			  }
 #else
@@ -399,35 +405,34 @@ int main(void) {
 	  if(uint16_current_target>PH_CURRENT_MAX) uint16_current_target = PH_CURRENT_MAX;
 	  if(uint32_PAS_counter > PAS_TIMEOUT) uint16_current_target = 0;
 #else
-	  static int go = 0;
 	  ButtonEvent_t button_event = check_button_events();
 	  switch (button_event)
 	  {
 	      case NO_PRESS:
 	      break;
 	      case SINGLE_PRESS:
-	          go = !go;
+	          go_level = !go_level;
 	      break;
 	      case DOUBLE_PRESS:
-	          go = -1;
+	          go_level = -1;
 	      break;
 	      case TRIPLE_PRESS:
-	          go = -2;
+	          go_level = -2;
 	      break;
 	  }
 	  if (HAL_GPIO_ReadPin(Brake_GPIO_Port, Brake_Pin) == GPIO_PIN_RESET)
 	  {
-	      go = 0;
+	      go_level = 0;
 	  }
-	  if (go == 1)
+	  if (go_level == 1)
 	  {
 	      throttle = (throttle + 3 > THROTTLE_MAX) ? THROTTLE_MAX : throttle + 3;
 	  }
-	  else if (go == -1)
+	  else if (go_level == -1)
 	  {
 	      throttle = (throttle + 3 > (THROTTLE_MAX>>2)*3) ? (THROTTLE_MAX>>2)*3 : throttle + 3;
 	  }
-	  else if (go == -2)
+	  else if (go_level == -2)
 	  {
 	      throttle = (throttle + 3 > (THROTTLE_MAX>>3)*5) ? (THROTTLE_MAX>>3)*5 : throttle + 3;
 	  }
